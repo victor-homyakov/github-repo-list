@@ -14,6 +14,10 @@
   color: white;
 }
 
+.App-pagination a {
+  margin: 0 10px;
+}
+
 .App-content {
   text-align: left;
   padding: 20px;
