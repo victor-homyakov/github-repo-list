@@ -2,8 +2,7 @@ import React, {Component} from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Repository from './Repository';
-
-const apiRoot = 'https://api.github.com';
+import GitHubApi from './GitHubApi';
 
 class App extends Component {
     state = {
@@ -13,57 +12,19 @@ class App extends Component {
     };
 
     componentDidMount() {
-        this.loadRepositories(apiRoot + '/repositories');
-    }
-
-    loadRepositories(url) {
-        fetch(url, {headers: {Accept: 'application/vnd.github.v3+json'}}).then(response => {
-            console.log(response.ok, response.status, response.statusText);
-            if (!response.ok) {
-                throw new Error(`${response.status} ${response.statusText}`);
-            }
-            const link = response.headers.get('Link');
-            return Promise.all([response.json(), link]);
-        }).then(([repositories, link]) => {
-            const paginationLinks = this.parsePaginationLinks(link);
-            //console.log('repositories', repositories);
-            repositories.forEach(r => {
-                if (r.fork) {
-                    console.log(r, 'is forked');
-                }
+        GitHubApi
+            .loadRepositories(GitHubApi.apiRoot + '/repositories')
+            .then(([repositories, paginationLinks]) => {
+                this.setState({isLoading: false, repositories, paginationLinks});
+            })
+            .catch(error => {
+                console.log('error', error);
             });
-            this.setState({isLoading: false, repositories, paginationLinks});
-        }).catch(error => {
-            console.log('error', error);
-        });
-    }
-
-    parsePaginationLinks(link) {
-        if (!link) {
-            return {};
-        }
-
-        const links = link.split(', ') || [];
-        const paginationLinks = {};
-        links.forEach(p => {
-            const parts = p.split('; rel=');
-            let link = parts[0].replace(/(^<)|(>$)/g, '');
-            const rel = parts[1].replace(/(^")|("$)/g, '');
-            if (rel === 'first') {
-                // ugly hack; original library should know how to process this
-                link = link.replace('{?since}', '');
-            }
-            paginationLinks[rel] = link;
-        });
-
-        console.log('paginationLinks', links, '=>', paginationLinks);
-        return paginationLinks;
     }
 
     onPaginationLinkClick(e, rel) {
         e.preventDefault();
         const url = this.state.paginationLinks[rel];
-        // console.log('go to page', url);
         if (url) {
             this.loadRepositories(url);
         }
