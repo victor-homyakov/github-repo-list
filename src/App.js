@@ -12,14 +12,7 @@ class App extends Component {
     };
 
     componentDidMount() {
-        GitHubApi
-            .loadRepositories(GitHubApi.apiRoot + '/repositories')
-            .then(([repositories, paginationLinks]) => {
-                this.setState({isLoading: false, repositories, paginationLinks});
-            })
-            .catch(error => {
-                console.log('error', error);
-            });
+        this.loadRepositories(GitHubApi.apiRoot + '/repositories');
     }
 
     onPaginationLinkClick(e, rel) {
@@ -28,6 +21,17 @@ class App extends Component {
         if (url) {
             this.loadRepositories(url);
         }
+    }
+
+    loadRepositories(url) {
+        GitHubApi
+            .loadRepositories(url)
+            .then(([repositories, paginationLinks]) => {
+                this.setState({isLoading: false, repositories, paginationLinks});
+            })
+            .catch(error => {
+                console.log('error', error);
+            });
     }
 
     renderPaginationLinks() {
